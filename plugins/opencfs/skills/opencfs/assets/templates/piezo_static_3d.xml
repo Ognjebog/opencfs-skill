@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): 1 mm PZT-5A cube, 100 V across z, bottom fixed in z only (stress-free).
+       Mesh groups: pzt (dim 3), bottom (dim 2), top (dim 2).
+       Checks: u_z(top) = -3.74e-8 m = d33*V (sign follows the poling direction in the material data);
+               electrode charge 1.505e-9 C = eps33^T*A*V/t (datasheet free capacitance 15.05 pF).
+       Piezo = mechanic + electrostatic on the same region + <piezoDirect> coupling.
+       MATERIAL: run  python scripts/piezo_material.py mat.xml PZT-5A  first. It adds "PZT-5A_epsS".
+         The database stores the FREE permittivity eps^T, but openCFS's e-form law needs the CLAMPED eps^S.
+         The raw "PZT-5A" gives the right displacements but about 51 % too much charge/capacitance.
+       CHARGE / ADMITTANCE: store elecCharge in <piezoDirect><storeResults> (total D = e*S + eps*E).
+         elecCharge under <electrostatic> is only the eps*E part, which is WRONG for piezo. Store it in one
+         place only, because both write to the same history/<job>-elecCharge-surfRegion-<name>.hist.
+         Harmonic: admittance Y = j*2*pi*f*Q/V; the .hist columns are f, |Q|, phase(deg).
+       Rotate the poling axis per region with <region ...><matRotation alpha=".." beta=".." gamma=".."/></region>.
+       Harmonic / eigenFrequency analyses use the same pdeList + couplingList. -->
+
+  <fileFormats>
+    <input><gmsh fileName="pz.msh"/></input>
+    <output><hdf5/><text id="txt"/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="3d">
+    <regionList><region name="pzt" material="PZT-5A_epsS"/></regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis><static/></analysis>
+    <pdeList>
+      <mechanic subType="3d">
+        <regionList><region name="pzt"/></regionList>
+        <bcsAndLoads><fix name="bottom"><comp dof="z"/></fix></bcsAndLoads>
+        <storeResults><nodeResult type="mechDisplacement"><allRegions/></nodeResult></storeResults>
+      </mechanic>
+      <electrostatic>
+        <regionList><region name="pzt"/></regionList>
+        <bcsAndLoads>
+          <ground name="bottom"/>
+          <potential name="top" value="100"/>
+        </bcsAndLoads>
+        <storeResults><nodeResult type="elecPotential"><allRegions/></nodeResult></storeResults>
+      </electrostatic>
+    </pdeList>
+    <couplingList>
+      <direct>
+        <piezoDirect>
+          <regionList><region name="pzt"/></regionList>
+          <storeResults>
+            <surfRegionResult type="elecCharge">
+              <surfRegionList><surfRegion name="top"/></surfRegionList>
+            </surfRegionResult>
+          </storeResults>
+        </piezoDirect>
+      </direct>
+    </couplingList>
+  </sequenceStep>
+</cfsSimulation>

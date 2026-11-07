@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): 2D duct 1 m x 0.1 m of air, piston (normal velocity 1 mm/s) at
+       the inlet, absorbing (non-reflecting) BC at the outlet, harmonic sweep 200..1000 Hz.
+       Mesh groups: air (dim 2), inlet (dim 1), outlet (dim 1).
+       Check: |p| = rho*c*v = 0.4133 Pa everywhere (plane travelling wave) - FE gives 0.41329.
+       Mesh rule of thumb: >= 10 linear (or 5 quadratic) elements per wavelength at the top frequency. -->
+
+  <fileFormats>
+    <input><gmsh fileName="duct.msh"/></input>
+    <output><hdf5/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList><region name="air" material="Air"/></regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis>
+      <harmonic>
+        <numFreq>3</numFreq><startFreq>200</startFreq><stopFreq>1000</stopFreq><sampling>linear</sampling>
+        <!-- or explicit: <frequencyList><freq value="500"/><freq value="1000"/></frequencyList> -->
+      </harmonic>
+    </analysis>
+    <pdeList>
+      <acoustic formulation="acouPressure">
+        <regionList><region name="air"/></regionList>
+        <bcsAndLoads>
+          <normalVelocity name="inlet" volumeRegion="air" value="1e-3"/>
+          <absorbingBCs name="outlet" volumeRegion="air"/>
+          <!-- also: <pressure name="..." value="1"/>, <soundSoft name="..."/>,
+               PML regions via dampingList (see references/xml_reference.md) -->
+        </bcsAndLoads>
+        <storeResults>
+          <!-- complexFormat only affects ParaView output; HDF5 always holds Real + Imag -->
+          <nodeResult type="acouPressure" complexFormat="amplPhase"><allRegions/></nodeResult>
+          <elemResult type="acouIntensity"><allRegions/></elemResult>
+        </storeResults>
+      </acoustic>
+    </pdeList>
+  </sequenceStep>
+</cfsSimulation>

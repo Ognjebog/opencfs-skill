@@ -1,0 +1,10 @@
+{
+  "name": "opencfs",
+  "version": "1.0.0",
+  "description": "Set up, run, debug and post-process openCFS (CFS++) finite-element simulations: Gmsh meshing, XML setup, solver runs, HDF5 results. Mechanics, acoustics, heat, electrostatics, magnetics, piezo and coupled problems.",
+  "author": { "name": "Ognjebog" },
+  "homepage": "https://github.com/Ognjebog/opencfs-skill",
+  "repository": "https://github.com/Ognjebog/opencfs-skill",
+  "license": "MIT",
+  "keywords": ["opencfs", "cfs++", "fem", "finite-element", "simulation", "acoustics", "piezoelectric", "gmsh"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "opencfs-skills",
+  "description": "Claude skill for openCFS finite-element simulations",
+  "owner": { "name": "Ognjebog" },
+  "plugins": [
+    {
+      "name": "opencfs",
+      "source": "./plugins/opencfs",
+      "description": "Set up, run, debug and post-process openCFS (CFS++) simulations"
+    }
+  ]
+}

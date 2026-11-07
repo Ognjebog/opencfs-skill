@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): vibro-acoustics. Clamped steel plate (1 m x 1 cm, plane strain)
+       excited by 1 Pa from below radiates into an air half-space (0.49 m, absorbing top).
+       Mesh groups: plate, air (dim 2); clamp, iface, plate_bottom, far (dim 1).
+       The plate and air meshes MUST be conforming at 'iface' (gmsh: fragment) - the interface
+       curve is the shared boundary and is named as its own physical group.
+       Coupling pattern: mechanic + acoustic PDEs in one pdeList + <acouMechDirect> on the interface. -->
+
+  <fileFormats>
+    <input><gmsh fileName="ma.msh"/></input>
+    <output><hdf5/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList>
+      <region name="plate" material="Steel"/>
+      <region name="air" material="Air"/>
+    </regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis>
+      <harmonic><frequencyList><freq value="100"/><freq value="250"/></frequencyList></harmonic>
+    </analysis>
+    <pdeList>
+      <mechanic subType="planeStrain">
+        <regionList><region name="plate"/></regionList>
+        <bcsAndLoads>
+          <fix name="clamp"><comp dof="x"/><comp dof="y"/></fix>
+          <pressure name="plate_bottom" value="1"/>
+        </bcsAndLoads>
+        <storeResults>
+          <nodeResult type="mechDisplacement" complexFormat="amplPhase"><allRegions/></nodeResult>
+        </storeResults>
+      </mechanic>
+      <acoustic formulation="acouPressure">
+        <regionList><region name="air"/></regionList>
+        <bcsAndLoads><absorbingBCs name="far" volumeRegion="air"/></bcsAndLoads>
+        <storeResults>
+          <nodeResult type="acouPressure" complexFormat="amplPhase"><allRegions/></nodeResult>
+        </storeResults>
+      </acoustic>
+    </pdeList>
+    <couplingList>
+      <direct>
+        <acouMechDirect>
+          <surfRegionList><surfRegion name="iface"/></surfRegionList>
+        </acouMechDirect>
+      </direct>
+    </couplingList>
+  </sequenceStep>
+</cfsSimulation>

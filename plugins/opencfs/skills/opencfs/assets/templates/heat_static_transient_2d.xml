@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): 2D copper plate 0.1 x 0.1 m. Left edge T = 100 C, right edge
+       convection h = 25 W/m^2K to 20 C. Step 1 static, step 2 transient (50 x 10 s).
+       Mesh groups: plate (dim 2), hot (dim 1), cold (dim 1).
+       Check: heatFlux through 'cold' = 198.75 W/m vs 1D analytic 198.76 W/m.
+       Results land in MultiStep_1 (static) and MultiStep_2 (transient) of the .cfs file. -->
+
+  <fileFormats>
+    <input><gmsh fileName="heat.msh"/></input>
+    <output><hdf5/><text id="txt"/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList><region name="plate" material="Copper"/></regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis><static/></analysis>
+    <pdeList>
+      <heatConduction>
+        <regionList><region name="plate"/></regionList>
+        <bcsAndLoads>
+          <temperature name="hot" value="100"/>
+          <heatTransport name="cold" volumeRegion="plate" heatTransferCoefficient="25" bulkTemperature="20"/>
+          <!-- other loads: <heatFlux name="edge" value="1000"/>  (W/m^2, into the body)
+                            <heatSourceDensity name="plate" value="1e5"/>  (W/m^3) -->
+        </bcsAndLoads>
+        <storeResults>
+          <nodeResult type="heatTemperature"><allRegions/></nodeResult>
+          <elemResult type="heatFluxDensity"><allRegions/></elemResult>
+          <surfRegionResult type="heatFlux">
+            <surfRegionList><surfRegion name="cold"/></surfRegionList>
+          </surfRegionResult>
+        </storeResults>
+      </heatConduction>
+    </pdeList>
+  </sequenceStep>
+  <sequenceStep index="2">
+    <analysis><transient><numSteps>50</numSteps><deltaT>10</deltaT></transient></analysis>
+    <pdeList>
+      <heatConduction>
+        <regionList><region name="plate"/></regionList>
+        <bcsAndLoads>
+          <temperature name="hot" value="100"/>
+          <heatTransport name="cold" volumeRegion="plate" heatTransferCoefficient="25" bulkTemperature="20"/>
+        </bcsAndLoads>
+        <storeResults><nodeResult type="heatTemperature"><allRegions/></nodeResult></storeResults>
+      </heatConduction>
+    </pdeList>
+  </sequenceStep>
+</cfsSimulation>

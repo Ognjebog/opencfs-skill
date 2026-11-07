@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): eigenfrequencies of a 2D cantilever (1 m x 0.1 m steel).
+       Mesh groups: beam (dim 2), fix (dim 1).
+       Result: f1 = 81.8 Hz vs Euler-Bernoulli 81.4 Hz (DB "Steel"). Each eigenmode is one "step";
+       the step value (cfs_results.py info) is the eigenfrequency in Hz. -->
+
+  <fileFormats>
+    <input><gmsh fileName="beam.msh"/></input>
+    <output><hdf5/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList><region name="beam" material="Steel"/></regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis>
+      <eigenFrequency>
+        <isQuadratic>no</isQuadratic>
+        <numModes>4</numModes>
+        <freqShift>0</freqShift>
+        <writeModes>yes</writeModes>
+      </eigenFrequency>
+    </analysis>
+    <pdeList>
+      <mechanic subType="planeStress">
+        <regionList><region name="beam"/></regionList>
+        <bcsAndLoads><fix name="fix"><comp dof="x"/><comp dof="y"/></fix></bcsAndLoads>
+        <storeResults><nodeResult type="mechDisplacement"><allRegions/></nodeResult></storeResults>
+      </mechanic>
+    </pdeList>
+  </sequenceStep>
+</cfsSimulation>

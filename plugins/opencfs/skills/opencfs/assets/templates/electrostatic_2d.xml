@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): 2D parallel-plate gap 0.1 m x 0.01 m, air, 100 V.
+       Mesh groups: gap (dim 2), bottom (dim 1), top (dim 1).
+       Check: elecEnergy 4.4295e-7 J/m = 0.5*eps0*E^2*Area; elecCharge 8.859e-9 C/m = C*V.
+       Capacitance per unit depth: C = 2*W/V^2 = Q/V. In 2D plane, region/surface results are per metre depth. -->
+
+  <fileFormats>
+    <input><gmsh fileName="cap.msh"/></input>
+    <output><hdf5/><text id="txt"/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList><region name="gap" material="Air"/></regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis><static/></analysis>
+    <pdeList>
+      <electrostatic>
+        <regionList><region name="gap"/></regionList>
+        <bcsAndLoads>
+          <ground name="bottom"/>
+          <potential name="top" value="100"/>
+          <!-- also: <charge name="..." value="..."/>, <chargeDensity name="region" value="..."/> -->
+        </bcsAndLoads>
+        <storeResults>
+          <nodeResult type="elecPotential"><allRegions/></nodeResult>
+          <elemResult type="elecFieldIntensity"><allRegions/></elemResult>
+          <regionResult type="elecEnergy"><allRegions/></regionResult>
+          <surfRegionResult type="elecCharge">
+            <surfRegionList><surfRegion name="top"/></surfRegionList>
+          </surfRegionResult>
+        </storeResults>
+      </electrostatic>
+    </pdeList>
+  </sequenceStep>
+</cfsSimulation>

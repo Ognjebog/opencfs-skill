@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): 2D cantilever, static, plane stress.
+       Mesh groups: beam (dim 2), fix (dim 1), tip (dim 1).
+       Check: axial pressure 1e6 Pa on a 1 m bar of DB "Steel" (E=200 GPa) -> u_x = -sigma*L/E = -5.0e-6 m.
+       Sign: positive <pressure> pushes INTO the body (compressive). -->
+
+  <fileFormats>
+    <input><gmsh fileName="beam.msh"/></input>
+    <output><hdf5/><text id="txt"/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList><region name="beam" material="Steel"/></regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis><static/></analysis>
+    <pdeList>
+      <mechanic subType="planeStress">   <!-- planeStrain | planeStress | axi | 3d -->
+        <regionList><region name="beam"/></regionList>
+        <bcsAndLoads>
+          <fix name="fix"><comp dof="x"/><comp dof="y"/></fix>
+          <pressure name="tip" value="1e6"/>
+          <!-- force instead: <force name="tip"><comp dof="y" value="-100"/></force>
+               (applied at the nodes of 'tip' - check the total via a reaction/energy result) -->
+        </bcsAndLoads>
+        <storeResults>
+          <nodeResult type="mechDisplacement"><allRegions/></nodeResult>
+          <elemResult type="vonMisesStress"><allRegions/></elemResult>
+          <elemResult type="mechStress"><allRegions/></elemResult>
+          <regionResult type="mechDeformEnergy"><allRegions/></regionResult>
+        </storeResults>
+      </mechanic>
+    </pdeList>
+  </sequenceStep>
+</cfsSimulation>

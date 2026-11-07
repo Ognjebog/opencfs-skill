@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Packaged skill (build artifact - attach to a GitHub release instead)
+*.skill
+
+# openCFS run outputs (if you test inside the repo)
+results_hdf5/
+history/
+*.info.xml
+*.log
+*.msh
+*.msh2
+*.cfs
+cfs_selftest_*/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+dist/

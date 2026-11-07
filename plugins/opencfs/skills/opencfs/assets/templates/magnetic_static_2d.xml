@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<cfsSimulation xmlns="http://www.cfs++.org/simulation">
+  <!-- TESTED (openCFS 25.07): 2D magnetostatics (nodal A_z formulation), square coil 2 cm x 2 cm
+       carrying 10 A per wire, in a 0.2 m air box.
+       Mesh groups: coil (dim 2), air (dim 2), outer (dim 1).
+       Check: magEnergy (0.2476 J/m) equals the integral of B^2/(2 mu0) computed from magFluxDensity.
+  
+       GOTCHAS found while testing:
+         * The outer boundary MUST be <fluxParallel name=".."><comp dof="z"/></fluxParallel>.
+           <ground name="outer"/> is accepted by the schema but does NOT pin A here -> singular system,
+           A ~ -1e7 offset, noisy B hot spots and absurd energies.
+         * <windingTurns> passes the schema but cfs aborts ("Currently the windingTurns can not be
+           specified"). Use <wireCrossSection area="A_wire"/>: current density J = I / A_wire, so the
+           ampere-turns of the region are I * A_region / A_wire (here 10 A * 4e-4/4e-6 = 1000 At).
+         * For eddy currents give the conductor a material with electricConductivity > 0 and use
+           harmonic/transient analysis. For 3D use <magneticEdge> (edge elements). -->
+
+  <fileFormats>
+    <input><gmsh fileName="mag.msh"/></input>
+    <output><hdf5/><text id="txt"/></output>
+    <materialData file="mat.xml" format="xml"/>
+  </fileFormats>
+  <domain geometryType="plane">
+    <regionList>
+      <region name="air" material="Air"/>
+      <region name="coil" material="Air"/>
+    </regionList>
+  </domain>
+  <sequenceStep index="1">
+    <analysis><static/></analysis>
+    <pdeList>
+      <magnetic>
+        <regionList><region name="air"/><region name="coil"/></regionList>
+        <bcsAndLoads>
+          <fluxParallel name="outer"><comp dof="z"/></fluxParallel>
+        </bcsAndLoads>
+        <coilList>
+          <coil id="c1">
+            <source type="current" value="10"/>
+            <part>
+              <regionList><region name="coil"/></regionList>
+              <direction><analytic><comp dof="z" value="1"/></analytic></direction>
+              <wireCrossSection area="4e-6"/>
+            </part>
+          </coil>
+        </coilList>
+        <storeResults>
+          <nodeResult type="magPotential"><allRegions/></nodeResult>
+          <elemResult type="magFluxDensity"><allRegions/></elemResult>
+          <regionResult type="magEnergy"><allRegions/></regionResult>
+        </storeResults>
+      </magnetic>
+    </pdeList>
+  </sequenceStep>
+</cfsSimulation>
